@@ -17,6 +17,16 @@ contract GuessSecretNumberTest is Test {
         exploitContract = new ExploitContract();
     }
 
+    // function testFindSecretNumber(uint8 n) public {
+    //     if (keccak256(abi.encodePacked(n)) == 0xdb81b4d58595fbbbb592d3661a34cdca14d7ab379441400cbfa1b78bc447c365) {
+    //         //console.log(n);
+    //         assertTrue(false, "Found!");
+    //     }
+    //     // Put solution here
+    //     // uint8 secretNumber = exploitContract.Exploiter();
+    //     // _checkSolved(secretNumber);
+    // }
+
     function testFindSecretNumber() public {
         // Put solution here
         uint8 secretNumber = exploitContract.Exploiter();
@@ -24,10 +34,7 @@ contract GuessSecretNumberTest is Test {
     }
 
     function _checkSolved(uint8 _secretNumber) internal {
-        assertTrue(
-            guessTheSecretNumber.guess{value: 1 ether}(_secretNumber),
-            "Wrong Number"
-        );
+        assertTrue(guessTheSecretNumber.guess{value: 1 ether}(_secretNumber), "Wrong Number");
         assertTrue(guessTheSecretNumber.isComplete(), "Challenge Incomplete");
     }
 

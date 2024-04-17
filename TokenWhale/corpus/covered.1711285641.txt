@@ -1,0 +1,133 @@
+/root/rareskills-solidity/capture-the-ether-foundry/TokenWhale/echidna/TokenWhaleEchidna.sol
+  1 |     | // SPDX-License-Identifier: AGPL-3.0
+  2 |     | pragma solidity ^0.8.13;
+  3 |     | 
+  4 |     | import "../src/TokenWhale.sol";
+  5 |     | 
+  6 | *   | contract Users {
+  7 | *   |     function proxy(address target, bytes memory data) public returns (bool success, bytes memory retData) {
+  8 | *   |         return target.call(data);
+  9 |     |     }
+ 10 |     | }
+ 11 |     | 
+ 12 | *r  | contract TokenWhaleEchidna {
+ 13 |     |     TokenWhale token;
+ 14 |     | 
+ 15 |     |     Users Alice = new Users();
+ 16 |     |     Users Bob = new Users();
+ 17 |     |     Users Pete = new Users();
+ 18 |     | 
+ 19 |     |     event Transfer(address indexed from, address indexed to, uint256 value);
+ 20 |     |     event Approval(address indexed owner, address indexed spender, uint256 value);
+ 21 |     | 
+ 22 |     |     constructor() {
+ 23 |     |         token = new TokenWhale(address(this));
+ 24 |     |     }
+ 25 |     | 
+ 26 | *   |     function transfer(uint256 amount) public {
+ 27 | *   |         uint256 prevBal = token.balanceOf(address(this));
+ 28 | *   |         amount = _between(amount, 1, prevBal);
+ 29 | *r  |         token.transfer(address(Alice), amount);
+ 30 | *   |         emit Transfer(address(this), address(Alice), amount);
+ 31 |     |     }
+ 32 |     | 
+ 33 | *   |     function approve(uint256 amount) public {
+ 34 | *   |         uint256 prevBal = token.balanceOf(address(Alice));
+ 35 | *   |         amount = _between(amount, 1, prevBal);
+ 36 | *   |         Alice.proxy(address(token), abi.encodeWithSelector(token.approve.selector, address(this), amount));
+ 37 | *   |         emit Approval(address(Alice), address(this), amount);
+ 38 |     |     }
+ 39 |     | 
+ 40 | *   |     function transferFrom(address to, uint256 amount) public {
+ 41 | *   |         uint256 prevBal = token.balanceOf(address(Alice));
+ 42 | *   |         amount = _between(amount, 1, prevBal);
+ 43 | *r  |         token.transferFrom(address(Alice), to, amount);
+ 44 | *   |         emit Transfer(address(this), to, amount);
+ 45 |     |     }
+ 46 |     | 
+ 47 | *   |     function testSolved() public view {
+ 48 | *   |         assert(!token.isComplete());
+ 49 |     |     }
+ 50 |     | 
+ 51 | *   |     function _between(uint256 val, uint256 lower, uint256 upper) internal pure returns (uint256) {
+ 52 | *   |         return lower + (val % (upper - lower + 1));
+ 53 |     |     }
+ 54 |     | }
+ 55 |     | 
+
+/root/rareskills-solidity/capture-the-ether-foundry/TokenWhale/src/TokenWhale.sol
+  1 |     | // SPDX-License-Identifier: UNLICENSED
+  2 |     | pragma solidity ^0.8.13;
+  3 |     | 
+  4 | *   | contract TokenWhale {
+  5 |     |     address player;
+  6 |     | 
+  7 | *   |     uint256 public totalSupply;
+  8 | *   |     mapping(address => uint256) public balanceOf;
+  9 |     |     mapping(address => mapping(address => uint256)) public allowance;
+ 10 |     | 
+ 11 | *   |     string public name = "Simple ERC20 Token";
+ 12 |     |     string public symbol = "SET";
+ 13 |     |     uint8 public decimals = 18;
+ 14 |     | 
+ 15 |     |     event Transfer(address indexed from, address indexed to, uint256 value);
+ 16 |     | 
+ 17 |     |     constructor(address _player) {
+ 18 |     |         player = _player;
+ 19 |     |         totalSupply = 1000;
+ 20 |     |         balanceOf[player] = 1000;
+ 21 |     |     }
+ 22 |     | 
+ 23 | *   |     function isComplete() public view returns (bool) {
+ 24 | *   |         return balanceOf[player] >= 1000000;
+ 25 |     |     }
+ 26 |     | 
+ 27 | *   |     function _transfer(address to, uint256 value) internal {
+ 28 |     |         unchecked {
+ 29 | *   |             balanceOf[msg.sender] -= value;
+ 30 | *   |             balanceOf[to] += value;
+ 31 |     |         }
+ 32 |     | 
+ 33 | *   |         emit Transfer(msg.sender, to, value);
+ 34 |     |     }
+ 35 |     | 
+ 36 | *   |     function transfer(address to, uint256 value) public {
+ 37 | *   |         require(balanceOf[msg.sender] >= value);
+ 38 | *   |         require(balanceOf[to] + value >= balanceOf[to]);
+ 39 |     | 
+ 40 | *   |         _transfer(to, value);
+ 41 |     |     }
+ 42 |     | 
+ 43 |     |     event Approval(
+ 44 |     |         address indexed owner,
+ 45 |     |         address indexed spender,
+ 46 |     |         uint256 value
+ 47 |     |     );
+ 48 |     | 
+ 49 | *   |     function approve(address spender, uint256 value) public {
+ 50 | *   |         allowance[msg.sender][spender] = value;
+ 51 | *   |         emit Approval(msg.sender, spender, value);
+ 52 |     |     }
+ 53 |     | 
+ 54 | *   |     function transferFrom(address from, address to, uint256 value) public {
+ 55 | *   |         require(balanceOf[from] >= value);
+ 56 | *   |         require(balanceOf[to] + value >= balanceOf[to]);
+ 57 | *   |         require(allowance[from][msg.sender] >= value);
+ 58 |     | 
+ 59 | *   |         allowance[from][msg.sender] -= value;
+ 60 | *   |         _transfer(to, value);
+ 61 |     |     }
+ 62 |     | }
+ 63 |     | 
+ 64 |     | // Write your exploit contract below
+ 65 |     | contract ExploitContract {
+ 66 |     |     TokenWhale public tokenWhale;
+ 67 |     | 
+ 68 |     |     constructor(TokenWhale _tokenWhale) {
+ 69 |     |         tokenWhale = _tokenWhale;
+ 70 |     |     }
+ 71 |     | 
+ 72 |     |     // write your exploit functions below
+ 73 |     | }
+ 74 |     | 
+

